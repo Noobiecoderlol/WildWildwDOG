@@ -54,13 +54,13 @@ export const GameCanvas: React.FC = () => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === "Space") {
-        e.preventDefault(); // Prevent page scrolling on spacebar
+        e.preventDefault();
         handleJump();
       }
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-      e.preventDefault(); // Prevent default touch behavior
+      e.preventDefault();
       handleJump();
     };
 
@@ -78,12 +78,16 @@ export const GameCanvas: React.FC = () => {
   }, [gameStarted, gameOver, isMobile]);
 
   useEffect(() => {
-    if (!gameStarted || gameOver) return;
+    if (!gameStarted || gameOver) {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+      return;
+    }
 
     const gameLoop = () => {
       frameCountRef.current += 1;
 
-      // Update bird position and rotation
       setBirdPos((prev) => ({
         ...prev,
         y: Math.min(Math.max(prev.y + birdVelocity, 0), GAME_HEIGHT),
@@ -91,7 +95,6 @@ export const GameCanvas: React.FC = () => {
       setBirdVelocity((prev) => prev + GRAVITY);
       setBirdRotation(birdVelocity * 4);
 
-      // Generate new candlesticks
       if (frameCountRef.current % 100 === 0) {
         setCandlesticks((prev) => {
           const newCandlesticks = [...prev];
@@ -106,7 +109,6 @@ export const GameCanvas: React.FC = () => {
         });
       }
 
-      // Update candlesticks position
       setCandlesticks((prev) => {
         return prev
           .map((c) => ({ ...c, x: c.x - CANDLESTICK_SPEED }))
@@ -146,7 +148,6 @@ export const GameCanvas: React.FC = () => {
         }
       }
 
-      // Update score
       if (frameCountRef.current % 50 === 0) {
         setScore((prev) => prev + 1);
       }
@@ -161,7 +162,7 @@ export const GameCanvas: React.FC = () => {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks]);
+  }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks, score]);
 
   return (
     <div
