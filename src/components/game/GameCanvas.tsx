@@ -38,6 +38,7 @@ export const GameCanvas: React.FC = () => {
   };
 
   const startGame = () => {
+    if (gameStarted && !gameOver) return;
     resetGame();
     setGameStarted(true);
     toast({
@@ -55,13 +56,21 @@ export const GameCanvas: React.FC = () => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         e.preventDefault();
-        handleJump();
+        if (!gameStarted || gameOver) {
+          startGame();
+        } else {
+          handleJump();
+        }
       }
     };
 
     const handleTouchStart = (e: TouchEvent) => {
       e.preventDefault();
-      handleJump();
+      if (!gameStarted || gameOver) {
+        startGame();
+      } else {
+        handleJump();
+      }
     };
 
     window.addEventListener("keydown", handleKeyPress);
@@ -164,6 +173,15 @@ export const GameCanvas: React.FC = () => {
     };
   }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks, score]);
 
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!gameStarted || gameOver) {
+      startGame();
+    } else {
+      handleJump();
+    }
+  };
+
   return (
     <div
       className="relative overflow-hidden bg-game-background rounded-lg shadow-xl mx-auto touch-none"
@@ -174,7 +192,7 @@ export const GameCanvas: React.FC = () => {
         maxHeight: '80vh',
         aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`
       }}
-      onClick={handleJump}
+      onClick={handleCanvasClick}
     >
       <div className="absolute top-4 left-4 text-2xl text-white font-bold z-10">
         {score}
