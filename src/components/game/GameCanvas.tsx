@@ -3,6 +3,7 @@ import { Bird } from "./Bird";
 import { Candlestick } from "./Candlestick";
 import { GameOverlay } from "./GameOverlay";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const GRAVITY = 0.5;
 const JUMP_FORCE = -10;
@@ -13,6 +14,7 @@ const CANDLESTICK_SPEED = 3;
 
 export const GameCanvas: React.FC = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
@@ -40,7 +42,7 @@ export const GameCanvas: React.FC = () => {
     setGameStarted(true);
     toast({
       title: "Game Started!",
-      description: "Press spacebar or click to jump",
+      description: isMobile ? "Tap the screen to jump" : "Press spacebar or click to jump",
     });
   };
 
@@ -52,13 +54,28 @@ export const GameCanvas: React.FC = () => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === "Space") {
+        e.preventDefault(); // Prevent page scrolling on spacebar
         handleJump();
       }
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault(); // Prevent default touch behavior
+      handleJump();
+    };
+
     window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [gameStarted, gameOver]);
+    if (isMobile) {
+      window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+      if (isMobile) {
+        window.removeEventListener("touchstart", handleTouchStart);
+      }
+    };
+  }, [gameStarted, gameOver, isMobile]);
 
   useEffect(() => {
     if (!gameStarted || gameOver) return;
@@ -148,8 +165,14 @@ export const GameCanvas: React.FC = () => {
 
   return (
     <div
-      className="relative overflow-hidden bg-game-background rounded-lg shadow-xl mx-auto"
-      style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+      className="relative overflow-hidden bg-game-background rounded-lg shadow-xl mx-auto touch-none"
+      style={{ 
+        width: GAME_WIDTH, 
+        height: GAME_HEIGHT,
+        maxWidth: '100vw',
+        maxHeight: '80vh',
+        aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`
+      }}
       onClick={handleJump}
     >
       <div className="absolute top-4 left-4 text-2xl text-white font-bold z-10">
