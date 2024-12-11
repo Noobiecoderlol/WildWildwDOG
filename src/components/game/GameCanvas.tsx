@@ -11,6 +11,8 @@ const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 const CANDLESTICK_GAP = 200;
 const CANDLESTICK_SPEED = 3;
+const INITIAL_CANDLESTICK_X = GAME_WIDTH;
+const CANDLESTICK_SPAWN_INTERVAL = 100; // Frames between spawns
 
 export const GameCanvas: React.FC = () => {
   const { toast } = useToast();
@@ -50,6 +52,16 @@ export const GameCanvas: React.FC = () => {
   const handleJump = () => {
     if (!gameStarted || gameOver) return;
     setBirdVelocity(JUMP_FORCE);
+  };
+
+  const spawnCandlestick = () => {
+    const height = Math.random() * (GAME_HEIGHT - CANDLESTICK_GAP - 100) + 50;
+    return {
+      x: INITIAL_CANDLESTICK_X,
+      y: 0,
+      height,
+      isBullish: Math.random() > 0.5,
+    };
   };
 
   useEffect(() => {
@@ -104,24 +116,19 @@ export const GameCanvas: React.FC = () => {
       setBirdVelocity((prev) => prev + GRAVITY);
       setBirdRotation(birdVelocity * 4);
 
-      if (frameCountRef.current % 100 === 0) {
-        setCandlesticks((prev) => {
-          const newCandlesticks = [...prev];
-          const height = Math.random() * (GAME_HEIGHT - CANDLESTICK_GAP - 100) + 50;
-          newCandlesticks.push({
-            x: GAME_WIDTH,
-            y: 0,
-            height,
-            isBullish: Math.random() > 0.5,
-          });
-          return newCandlesticks;
-        });
+      // Spawn new candlesticks at regular intervals
+      if (frameCountRef.current % CANDLESTICK_SPAWN_INTERVAL === 0) {
+        setCandlesticks((prev) => [...prev, spawnCandlestick()]);
       }
 
+      // Update candlestick positions smoothly
       setCandlesticks((prev) => {
         return prev
-          .map((c) => ({ ...c, x: c.x - CANDLESTICK_SPEED }))
-          .filter((c) => c.x > -50);
+          .map((c) => ({
+            ...c,
+            x: c.x - CANDLESTICK_SPEED,
+          }))
+          .filter((c) => c.x > -64); // Remove candlesticks that are completely off screen
       });
 
       // Check collisions
@@ -202,7 +209,7 @@ export const GameCanvas: React.FC = () => {
       
       {candlesticks.map((candlestick, index) => (
         <Candlestick
-          key={index}
+          key={`${index}-${candlestick.x}`}
           position={{ x: candlestick.x, y: candlestick.y }}
           height={candlestick.height}
           isBullish={candlestick.isBullish}
