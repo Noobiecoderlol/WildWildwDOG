@@ -13,6 +13,9 @@ const CANDLESTICK_GAP = 200;
 const CANDLESTICK_SPEED = 3;
 const INITIAL_CANDLESTICK_X = GAME_WIDTH;
 const CANDLESTICK_SPAWN_INTERVAL = 100; // Frames between spawns
+const BIRD_SIZE = 24;
+const CANDLESTICK_WIDTH = 64;
+const WICK_WIDTH = 8;
 
 export const GameCanvas: React.FC = () => {
   const { toast } = useToast();
@@ -62,6 +65,50 @@ export const GameCanvas: React.FC = () => {
       height,
       isBullish: Math.random() > 0.5,
     };
+  };
+
+  const checkCollision = (
+    birdRect: { x: number; y: number; width: number; height: number },
+    candlestick: { x: number; y: number; height: number; isBullish: boolean }
+  ) => {
+    const bodyHeight = Math.min(candlestick.height, 100);
+    const wickHeight = Math.max(0, candlestick.height - bodyHeight);
+    
+    // Calculate body position and dimensions
+    const bodyRect = {
+      x: candlestick.x,
+      width: CANDLESTICK_WIDTH,
+      height: bodyHeight,
+      y: candlestick.isBullish 
+        ? GAME_HEIGHT - candlestick.y - bodyHeight 
+        : candlestick.y
+    };
+
+    // Calculate wick position and dimensions
+    const wickRect = {
+      x: candlestick.x + (CANDLESTICK_WIDTH - WICK_WIDTH) / 2,
+      width: WICK_WIDTH,
+      height: wickHeight,
+      y: candlestick.isBullish
+        ? GAME_HEIGHT - candlestick.y - candlestick.height
+        : candlestick.y + bodyHeight
+    };
+
+    // Check collision with body
+    const bodyCollision = 
+      birdRect.x < bodyRect.x + bodyRect.width &&
+      birdRect.x + birdRect.width > bodyRect.x &&
+      birdRect.y < bodyRect.y + bodyRect.height &&
+      birdRect.y + birdRect.height > bodyRect.y;
+
+    // Check collision with wick
+    const wickCollision =
+      birdRect.x < wickRect.x + wickRect.width &&
+      birdRect.x + birdRect.width > wickRect.x &&
+      birdRect.y < wickRect.y + wickRect.height &&
+      birdRect.y + birdRect.height > wickRect.y;
+
+    return bodyCollision || wickCollision;
   };
 
   useEffect(() => {
@@ -116,43 +163,29 @@ export const GameCanvas: React.FC = () => {
       setBirdVelocity((prev) => prev + GRAVITY);
       setBirdRotation(birdVelocity * 4);
 
-      // Spawn new candlesticks at regular intervals
       if (frameCountRef.current % CANDLESTICK_SPAWN_INTERVAL === 0) {
         setCandlesticks((prev) => [...prev, spawnCandlestick()]);
       }
 
-      // Update candlestick positions smoothly
       setCandlesticks((prev) => {
         return prev
           .map((c) => ({
             ...c,
             x: c.x - CANDLESTICK_SPEED,
           }))
-          .filter((c) => c.x > -64); // Remove candlesticks that are completely off screen
+          .filter((c) => c.x > -64);
       });
 
-      // Check collisions
+      // Check collisions with updated collision detection
       const birdRect = {
         x: birdPos.x,
         y: birdPos.y,
-        width: 24,
-        height: 24,
+        width: BIRD_SIZE,
+        height: BIRD_SIZE,
       };
 
       for (const candlestick of candlesticks) {
-        const candlestickRect = {
-          x: candlestick.x,
-          y: candlestick.y,
-          width: 64,
-          height: candlestick.height,
-        };
-
-        if (
-          birdRect.x < candlestickRect.x + candlestickRect.width &&
-          birdRect.x + birdRect.width > candlestickRect.x &&
-          birdRect.y < candlestickRect.y + candlestickRect.height &&
-          birdRect.y + birdRect.height > candlestickRect.y
-        ) {
+        if (checkCollision(birdRect, candlestick)) {
           setGameOver(true);
           setHighScore((prev) => Math.max(prev, score));
           toast({
