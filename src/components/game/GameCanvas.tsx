@@ -12,7 +12,7 @@ const GAME_HEIGHT = 600;
 const CANDLESTICK_GAP = 200;
 const CANDLESTICK_SPEED = 3;
 const INITIAL_CANDLESTICK_X = GAME_WIDTH;
-const CANDLESTICK_SPAWN_INTERVAL = 100; // Frames between spawns
+const CANDLESTICK_SPAWN_INTERVAL = 100;
 const BIRD_SIZE = 24;
 const CANDLESTICK_WIDTH = 64;
 const WICK_WIDTH = 8;
@@ -156,10 +156,25 @@ export const GameCanvas: React.FC = () => {
     const gameLoop = () => {
       frameCountRef.current += 1;
 
+      // Update bird position with bottom screen boundary check
+      const newBirdY = Math.min(Math.max(birdPos.y + birdVelocity, 0), GAME_HEIGHT - BIRD_SIZE);
       setBirdPos((prev) => ({
         ...prev,
-        y: Math.min(Math.max(prev.y + birdVelocity, 0), GAME_HEIGHT),
+        y: newBirdY,
       }));
+
+      // Check if bird hits the bottom of the screen
+      if (newBirdY >= GAME_HEIGHT - BIRD_SIZE) {
+        setGameOver(true);
+        setHighScore((prev) => Math.max(prev, score));
+        toast({
+          title: "Game Over!",
+          description: `Score: ${score}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       setBirdVelocity((prev) => prev + GRAVITY);
       setBirdRotation(birdVelocity * 4);
 
@@ -176,10 +191,10 @@ export const GameCanvas: React.FC = () => {
           .filter((c) => c.x > -64);
       });
 
-      // Check collisions with updated collision detection
+      // Check collisions with candlesticks
       const birdRect = {
         x: birdPos.x,
-        y: birdPos.y,
+        y: newBirdY,
         width: BIRD_SIZE,
         height: BIRD_SIZE,
       };
