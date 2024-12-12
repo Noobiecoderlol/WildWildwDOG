@@ -27,6 +27,7 @@ export const GameCanvas: React.FC = () => {
   const [birdPos, setBirdPos] = useState({ x: 100, y: GAME_HEIGHT / 2 });
   const [birdVelocity, setBirdVelocity] = useState(0);
   const [birdRotation, setBirdRotation] = useState(0);
+  const [hasStartedMoving, setHasStartedMoving] = useState(false);
   const [candlesticks, setCandlesticks] = useState<Array<{ x: number; y: number; height: number; isBullish: boolean }>>([]);
   
   const gameLoopRef = useRef<number>();
@@ -39,6 +40,7 @@ export const GameCanvas: React.FC = () => {
     setCandlesticks([]);
     setScore(0);
     setGameOver(false);
+    setHasStartedMoving(false);
     frameCountRef.current = 0;
   };
 
@@ -48,12 +50,15 @@ export const GameCanvas: React.FC = () => {
     setGameStarted(true);
     toast({
       title: "Game Started!",
-      description: isMobile ? "Tap the screen to jump" : "Press spacebar or click to jump",
+      description: isMobile ? "Tap the screen to start flying" : "Press spacebar or click to start flying",
     });
   };
 
   const handleJump = () => {
     if (!gameStarted || gameOver) return;
+    if (!hasStartedMoving) {
+      setHasStartedMoving(true);
+    }
     setBirdVelocity(JUMP_FORCE);
   };
 
@@ -156,28 +161,31 @@ export const GameCanvas: React.FC = () => {
     const gameLoop = () => {
       frameCountRef.current += 1;
 
-      // Update bird position with bottom screen boundary check
-      const newBirdY = Math.min(Math.max(birdPos.y + birdVelocity, 0), GAME_HEIGHT - BIRD_SIZE);
-      setBirdPos((prev) => ({
-        ...prev,
-        y: newBirdY,
-      }));
+      // Only apply physics if the bird has started moving
+      if (hasStartedMoving) {
+        const newBirdY = Math.min(Math.max(birdPos.y + birdVelocity, 0), GAME_HEIGHT - BIRD_SIZE);
+        setBirdPos((prev) => ({
+          ...prev,
+          y: newBirdY,
+        }));
 
-      // Check if bird hits the bottom of the screen
-      if (newBirdY >= GAME_HEIGHT - BIRD_SIZE) {
-        setGameOver(true);
-        setHighScore((prev) => Math.max(prev, score));
-        toast({
-          title: "Game Over!",
-          description: `Score: ${score}`,
-          variant: "destructive",
-        });
-        return;
+        // Check if bird hits the bottom of the screen
+        if (newBirdY >= GAME_HEIGHT - BIRD_SIZE) {
+          setGameOver(true);
+          setHighScore((prev) => Math.max(prev, score));
+          toast({
+            title: "Game Over!",
+            description: `Score: ${score}`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setBirdVelocity((prev) => prev + GRAVITY);
+        setBirdRotation(birdVelocity * 4);
       }
 
-      setBirdVelocity((prev) => prev + GRAVITY);
-      setBirdRotation(birdVelocity * 4);
-
+      // Continue with obstacle spawning and movement regardless of bird movement
       if (frameCountRef.current % CANDLESTICK_SPAWN_INTERVAL === 0) {
         setCandlesticks((prev) => [...prev, spawnCandlestick()]);
       }
@@ -191,28 +199,31 @@ export const GameCanvas: React.FC = () => {
           .filter((c) => c.x > -64);
       });
 
-      // Check collisions with candlesticks
-      const birdRect = {
-        x: birdPos.x,
-        y: newBirdY,
-        width: BIRD_SIZE,
-        height: BIRD_SIZE,
-      };
+      // Only check collisions if the bird has started moving
+      if (hasStartedMoving) {
+        const birdRect = {
+          x: birdPos.x,
+          y: birdPos.y,
+          width: BIRD_SIZE,
+          height: BIRD_SIZE,
+        };
 
-      for (const candlestick of candlesticks) {
-        if (checkCollision(birdRect, candlestick)) {
-          setGameOver(true);
-          setHighScore((prev) => Math.max(prev, score));
-          toast({
-            title: "Game Over!",
-            description: `Score: ${score}`,
-            variant: "destructive",
-          });
-          return;
+        for (const candlestick of candlesticks) {
+          if (checkCollision(birdRect, candlestick)) {
+            setGameOver(true);
+            setHighScore((prev) => Math.max(prev, score));
+            toast({
+              title: "Game Over!",
+              description: `Score: ${score}`,
+              variant: "destructive",
+            });
+            return;
+          }
         }
       }
 
-      if (frameCountRef.current % 50 === 0) {
+      // Only increment score if the bird has started moving
+      if (hasStartedMoving && frameCountRef.current % 50 === 0) {
         setScore((prev) => prev + 1);
       }
 
@@ -226,7 +237,7 @@ export const GameCanvas: React.FC = () => {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks, score]);
+  }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks, score, hasStartedMoving]);
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     e.preventDefault();
