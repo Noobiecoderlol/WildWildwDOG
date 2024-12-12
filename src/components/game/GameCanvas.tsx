@@ -249,13 +249,14 @@ export const GameCanvas: React.FC = () => {
 
   return (
     <div
-      className="relative overflow-hidden bg-game-background rounded-lg shadow-xl mx-auto touch-none"
+      className="relative overflow-hidden rounded-lg shadow-xl mx-auto touch-none"
       style={{ 
         width: GAME_WIDTH, 
         height: GAME_HEIGHT,
         maxWidth: '100vw',
         maxHeight: '80vh',
-        aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`
+        aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`,
+        backgroundColor: '#87CEEB'
       }}
       onClick={handleCanvasClick}
     >
