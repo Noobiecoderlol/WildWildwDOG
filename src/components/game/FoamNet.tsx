@@ -23,6 +23,7 @@ export const FoamNet: React.FC<FoamNetProps> = ({ isVisible }) => {
       style={{
         transform: `scale(${scale})`,
         animation: isVisible ? 'netWrap 0.7s forwards' : 'none',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
       }}
     >
       {/* Diamond pattern mesh */}
@@ -30,14 +31,15 @@ export const FoamNet: React.FC<FoamNetProps> = ({ isVisible }) => {
         className="absolute inset-0"
         style={{
           backgroundImage: `
-            linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.9) 49%, rgba(255,255,255,0.9) 51%, transparent 52%),
-            linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.9) 49%, rgba(255,255,255,0.9) 51%, transparent 52%)
+            linear-gradient(45deg, transparent 47%, rgba(255,255,255,1) 48%, rgba(255,255,255,1) 52%, transparent 53%),
+            linear-gradient(-45deg, transparent 47%, rgba(255,255,255,1) 48%, rgba(255,255,255,1) 52%, transparent 53%)
           `,
           backgroundSize: '30px 30px',
           backgroundPosition: 'center',
-          filter: 'blur(0.5px)',
+          filter: 'blur(0.3px)',
           transform: 'scale(1.1)',
-          opacity: 0.9,
+          opacity: 1,
+          mixBlendMode: 'screen',
         }}
       />
       
@@ -46,13 +48,14 @@ export const FoamNet: React.FC<FoamNetProps> = ({ isVisible }) => {
         className="absolute inset-0"
         style={{
           backgroundImage: `
-            linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.5) 49%, rgba(255,255,255,0.5) 51%, transparent 52%),
-            linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.5) 49%, rgba(255,255,255,0.5) 51%, transparent 52%)
+            linear-gradient(45deg, transparent 47%, rgba(255,255,255,0.8) 48%, rgba(255,255,255,0.8) 52%, transparent 53%),
+            linear-gradient(-45deg, transparent 47%, rgba(255,255,255,0.8) 48%, rgba(255,255,255,0.8) 52%, transparent 53%)
           `,
           backgroundSize: '40px 40px',
           backgroundPosition: 'center',
           animation: isVisible ? 'stretchNet 0.7s forwards' : 'none',
-          opacity: 0.7,
+          opacity: 0.9,
+          mixBlendMode: 'screen',
         }}
       />
 
