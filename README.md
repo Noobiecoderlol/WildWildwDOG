@@ -5,8 +5,9 @@ A game build entirely in public on X with the wDOG community making all the deci
 
 **Game URL**:
 
-This project is built with
+>For devs<
 
+This project is built with
 - Vite
 - TypeScript
 - React
