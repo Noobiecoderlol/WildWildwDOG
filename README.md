@@ -3,7 +3,7 @@ A game build entirely in public on X with the wDOG community making all the deci
 
 **Get involved**: https://x.com/eltotow 
 
-**Game URL**: https://flappy-candle-journey.netlify.app/
+**Game URL**: https://wildwildwdog.netlify.app/
 
 >For devs
 
