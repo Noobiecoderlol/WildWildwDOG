@@ -161,8 +161,9 @@ export const GameCanvas: React.FC = () => {
     const gameLoop = () => {
       frameCountRef.current += 1;
 
-      // Only apply physics if the bird has started moving
+      // Only apply game physics and mechanics after the first jump
       if (hasStartedMoving) {
+        // Bird physics
         const newBirdY = Math.min(Math.max(birdPos.y + birdVelocity, 0), GAME_HEIGHT - BIRD_SIZE);
         setBirdPos((prev) => ({
           ...prev,
@@ -183,24 +184,22 @@ export const GameCanvas: React.FC = () => {
 
         setBirdVelocity((prev) => prev + GRAVITY);
         setBirdRotation(birdVelocity * 4);
-      }
 
-      // Continue with obstacle spawning and movement regardless of bird movement
-      if (frameCountRef.current % CANDLESTICK_SPAWN_INTERVAL === 0) {
-        setCandlesticks((prev) => [...prev, spawnCandlestick()]);
-      }
+        // Spawn and move candlesticks only after first jump
+        if (frameCountRef.current % CANDLESTICK_SPAWN_INTERVAL === 0) {
+          setCandlesticks((prev) => [...prev, spawnCandlestick()]);
+        }
 
-      setCandlesticks((prev) => {
-        return prev
-          .map((c) => ({
-            ...c,
-            x: c.x - CANDLESTICK_SPEED,
-          }))
-          .filter((c) => c.x > -64);
-      });
+        setCandlesticks((prev) => {
+          return prev
+            .map((c) => ({
+              ...c,
+              x: c.x - CANDLESTICK_SPEED,
+            }))
+            .filter((c) => c.x > -64);
+        });
 
-      // Only check collisions if the bird has started moving
-      if (hasStartedMoving) {
+        // Check collisions
         const birdRect = {
           x: birdPos.x,
           y: birdPos.y,
@@ -220,11 +219,11 @@ export const GameCanvas: React.FC = () => {
             return;
           }
         }
-      }
 
-      // Only increment score if the bird has started moving
-      if (hasStartedMoving && frameCountRef.current % 50 === 0) {
-        setScore((prev) => prev + 1);
+        // Increment score
+        if (frameCountRef.current % 50 === 0) {
+          setScore((prev) => prev + 1);
+        }
       }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
