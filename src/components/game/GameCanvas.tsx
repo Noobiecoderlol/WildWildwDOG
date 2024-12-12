@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Bird } from "./Bird";
 import { Candlestick } from "./Candlestick";
 import { GameOverlay } from "./GameOverlay";
+import { FoamNet } from "./FoamNet";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -274,6 +275,8 @@ export const GameCanvas: React.FC = () => {
           isBullish={candlestick.isBullish}
         />
       ))}
+
+      <FoamNet isVisible={gameOver} />
 
       {(!gameStarted || gameOver) && (
         <GameOverlay
