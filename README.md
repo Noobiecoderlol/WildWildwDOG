@@ -5,7 +5,7 @@ A game build entirely in public on X with the wDOG community making all the deci
 
 **Game URL**:
 
->For devs<
+>For devs
 
 This project is built with
 - Vite
