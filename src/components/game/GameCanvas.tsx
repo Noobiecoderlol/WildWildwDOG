@@ -5,6 +5,7 @@ import { GameOverlay } from "./GameOverlay";
 import { FoamNet } from "./FoamNet";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSound } from "@/hooks/use-sound";
 
 const GRAVITY = 0.5;
 const JUMP_FORCE = -10;
@@ -34,6 +35,11 @@ export const GameCanvas: React.FC = () => {
   const gameLoopRef = useRef<number>();
   const frameCountRef = useRef(0);
 
+  // Sound hooks
+  const backgroundMusic = useSound('/audio/background-music.mp3', { loop: true, volume: 0.5 });
+  const jumpSound = useSound('/audio/jump.mp3', { volume: 0.3 });
+  const gameOverSound = useSound('/audio/game-over.mp3', { volume: 0.4 });
+
   const resetGame = () => {
     setBirdPos({ x: 100, y: GAME_HEIGHT / 2 });
     setBirdVelocity(0);
@@ -49,6 +55,7 @@ export const GameCanvas: React.FC = () => {
     if (gameStarted && !gameOver) return;
     resetGame();
     setGameStarted(true);
+    backgroundMusic.play();
     toast({
       title: "Game Started!",
       description: isMobile ? "Tap the screen to start flying" : "Press spacebar or click to start flying",
@@ -61,6 +68,7 @@ export const GameCanvas: React.FC = () => {
       setHasStartedMoving(true);
     }
     setBirdVelocity(JUMP_FORCE);
+    jumpSound.play();
   };
 
   const spawnCandlestick = () => {
@@ -247,6 +255,22 @@ export const GameCanvas: React.FC = () => {
       handleJump();
     }
   };
+
+  useEffect(() => {
+    if (gameOver) {
+      backgroundMusic.pause();
+      gameOverSound.play();
+    }
+  }, [gameOver]);
+
+  // Cleanup sounds when component unmounts
+  useEffect(() => {
+    return () => {
+      backgroundMusic.stop();
+      jumpSound.stop();
+      gameOverSound.stop();
+    };
+  }, []);
 
   return (
     <div
