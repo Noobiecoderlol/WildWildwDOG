@@ -6,15 +6,21 @@ import { FoamNet } from "./FoamNet";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSound } from "@/hooks/use-sound";
+import { Button } from "@/components/ui/button";
+import { Volume2, VolumeX } from "lucide-react";
 
 const GRAVITY = 0.5;
+const EASY_GRAVITY = 0.3;
 const JUMP_FORCE = -10;
+const EASY_JUMP_FORCE = -8;
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 const CANDLESTICK_GAP = 200;
 const CANDLESTICK_SPEED = 3;
 const INITIAL_CANDLESTICK_X = GAME_WIDTH;
 const CANDLESTICK_SPAWN_INTERVAL = 100;
+const EASY_SCORE_INTERVAL = 100;
+const NORMAL_SCORE_INTERVAL = 50;
 const BIRD_SIZE = 24;
 const CANDLESTICK_WIDTH = 64;
 const WICK_WIDTH = 8;
@@ -31,13 +37,15 @@ export const GameCanvas: React.FC = () => {
   const [birdRotation, setBirdRotation] = useState(0);
   const [hasStartedMoving, setHasStartedMoving] = useState(false);
   const [candlesticks, setCandlesticks] = useState<Array<{ x: number; y: number; height: number; isBullish: boolean }>>([]);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isEasyMode, setIsEasyMode] = useState(false);
   
   const gameLoopRef = useRef<number>();
   const frameCountRef = useRef(0);
 
   // Sound hooks
   const backgroundMusic = useSound('/audio/background-music.mp3', { loop: true, volume: 0.5 });
-  const jumpSound = useSound('/audio/jump.mp3', { volume: 0.3 });
+  const jumpSound = useSound('/audio/jump.mp3', { volume: 0.4 });
   const gameOverSound = useSound('/audio/game-over.mp3', { volume: 0.4 });
 
   const resetGame = () => {
@@ -67,8 +75,8 @@ export const GameCanvas: React.FC = () => {
     if (!hasStartedMoving) {
       setHasStartedMoving(true);
     }
-    setBirdVelocity(JUMP_FORCE);
-    jumpSound.play();
+    setBirdVelocity(isEasyMode ? EASY_JUMP_FORCE : JUMP_FORCE);
+    if (!isMuted) jumpSound.play();
   };
 
   const spawnCandlestick = () => {
@@ -170,31 +178,34 @@ export const GameCanvas: React.FC = () => {
     const gameLoop = () => {
       frameCountRef.current += 1;
 
-      // Only apply game physics and mechanics after the first jump
       if (hasStartedMoving) {
-        // Bird physics
+        const gravity = isEasyMode ? EASY_GRAVITY : GRAVITY;
         const newBirdY = Math.min(Math.max(birdPos.y + birdVelocity, 0), GAME_HEIGHT - BIRD_SIZE);
         setBirdPos((prev) => ({
           ...prev,
           y: newBirdY,
         }));
 
-        // Check if bird hits the bottom of the screen
         if (newBirdY >= GAME_HEIGHT - BIRD_SIZE) {
           setGameOver(true);
           setHighScore((prev) => Math.max(prev, score));
+          if (!isMuted) gameOverSound.play();
           toast({
-            title: "Game Over!",
+            title: "Get Wrapped!",
             description: `Score: ${score}`,
             variant: "destructive",
           });
           return;
         }
 
-        setBirdVelocity((prev) => prev + GRAVITY);
+        setBirdVelocity((prev) => prev + gravity);
         setBirdRotation(birdVelocity * 4);
 
-        // Spawn and move candlesticks only after first jump
+        const scoreInterval = isEasyMode ? EASY_SCORE_INTERVAL : NORMAL_SCORE_INTERVAL;
+        if (frameCountRef.current % scoreInterval === 0) {
+          setScore((prev) => prev + 1);
+        }
+
         if (frameCountRef.current % CANDLESTICK_SPAWN_INTERVAL === 0) {
           setCandlesticks((prev) => [...prev, spawnCandlestick()]);
         }
@@ -208,7 +219,6 @@ export const GameCanvas: React.FC = () => {
             .filter((c) => c.x > -64);
         });
 
-        // Check collisions
         const birdRect = {
           x: birdPos.x,
           y: birdPos.y,
@@ -220,18 +230,14 @@ export const GameCanvas: React.FC = () => {
           if (checkCollision(birdRect, candlestick)) {
             setGameOver(true);
             setHighScore((prev) => Math.max(prev, score));
+            if (!isMuted) gameOverSound.play();
             toast({
-              title: "Game Over!",
+              title: "Get Wrapped!",
               description: `Score: ${score}`,
               variant: "destructive",
             });
             return;
           }
-        }
-
-        // Increment score
-        if (frameCountRef.current % 50 === 0) {
-          setScore((prev) => prev + 1);
         }
       }
 
@@ -245,7 +251,7 @@ export const GameCanvas: React.FC = () => {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks, score, hasStartedMoving]);
+  }, [gameStarted, gameOver, birdPos, birdVelocity, candlesticks, score, hasStartedMoving, isEasyMode]);
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -272,6 +278,28 @@ export const GameCanvas: React.FC = () => {
     };
   }, []);
 
+  // Update volume when mute state changes
+  useEffect(() => {
+    const volume = isMuted ? 0 : 0.5;
+    backgroundMusic.setVolume(volume);
+    jumpSound.setVolume(volume * 0.6);
+    gameOverSound.setVolume(volume * 0.8);
+  }, [isMuted]);
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent game from starting/jumping
+    setIsMuted(!isMuted);
+  };
+
+  const toggleDifficulty = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent game from starting/jumping
+    setIsEasyMode(!isEasyMode);
+    toast({
+      title: !isEasyMode ? "Easy Mode Activated" : "Normal Mode Activated",
+      description: !isEasyMode ? "Slower falling, easier scoring" : "Standard game speed",
+    });
+  };
+
   return (
     <div
       className="relative overflow-hidden rounded-lg shadow-xl mx-auto touch-none"
@@ -285,6 +313,29 @@ export const GameCanvas: React.FC = () => {
       }}
       onClick={handleCanvasClick}
     >
+      {/* Control buttons */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm"
+          onClick={toggleMute}
+        >
+          {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className={`w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm ${
+            isEasyMode ? 'border-green-400' : ''
+          }`}
+          onClick={toggleDifficulty}
+        >
+          {isEasyMode ? 'E' : 'N'}
+        </Button>
+      </div>
+
+      {/* Score display */}
       <div className="absolute top-4 left-4 text-2xl text-white font-bold z-10">
         {score}
       </div>
@@ -308,6 +359,7 @@ export const GameCanvas: React.FC = () => {
           highScore={highScore}
           isGameOver={gameOver}
           onStart={startGame}
+          isEasyMode={isEasyMode}
         />
       )}
     </div>
