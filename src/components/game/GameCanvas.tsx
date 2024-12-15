@@ -6,6 +6,7 @@ import { FoamNet } from "./FoamNet";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSound } from "@/hooks/use-sound";
+import { useBackground } from "@/hooks/use-background";
 import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX } from "lucide-react";
 
@@ -47,6 +48,8 @@ export const GameCanvas: React.FC = () => {
   const backgroundMusic = useSound('/audio/background-music.mp3', { loop: true, volume: 0.5 });
   const jumpSound = useSound('/audio/jump.mp3', { volume: 0.4 });
   const gameOverSound = useSound('/audio/game-over.mp3', { volume: 0.4 });
+
+  const { backgroundImage, isTransitioning } = useBackground(score);
 
   const resetGame = () => {
     setBirdPos({ x: 100, y: GAME_HEIGHT / 2 });
@@ -309,7 +312,11 @@ export const GameCanvas: React.FC = () => {
         maxWidth: '100vw',
         maxHeight: '80vh',
         aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`,
-        backgroundColor: '#87CEEB'
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        transition: 'filter 0.5s ease-in-out',
+        filter: isTransitioning ? 'brightness(150%)' : 'brightness(100%)',
       }}
       onClick={handleCanvasClick}
     >

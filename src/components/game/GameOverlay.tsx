@@ -6,9 +6,16 @@ interface GameOverlayProps {
   highScore: number;
   isGameOver: boolean;
   onStart: () => void;
+  isEasyMode: boolean;
 }
 
-export const GameOverlay: React.FC<GameOverlayProps> = ({ score, highScore, isGameOver, onStart }) => {
+export const GameOverlay: React.FC<GameOverlayProps> = ({ 
+  score, 
+  highScore, 
+  isGameOver, 
+  onStart,
+  isEasyMode 
+}) => {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="text-center space-y-4 p-8 rounded-lg bg-white/10 backdrop-blur-md">
@@ -19,7 +26,15 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ score, highScore, isGa
           <div className="space-y-2 mb-6">
             <p className="text-2xl text-white">Score: {score}</p>
             <p className="text-xl text-white/80">High Score: {highScore}</p>
+            <p className="text-sm text-white/60">
+              Mode: {isEasyMode ? "Easy" : "Normal"}
+            </p>
           </div>
+        )}
+        {!isGameOver && (
+          <p className="text-sm text-white/60 mb-4">
+            Current Mode: {isEasyMode ? "Easy" : "Normal"}
+          </p>
         )}
         <Button
           onClick={onStart}
