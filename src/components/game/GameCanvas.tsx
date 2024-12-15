@@ -49,7 +49,7 @@ export const GameCanvas: React.FC = () => {
   const jumpSound = useSound('/audio/jump.mp3', { volume: 0.4 });
   const gameOverSound = useSound('/audio/game-over.mp3', { volume: 0.4 });
 
-  const { backgroundImage, isTransitioning } = useBackground(score);
+  const { style: backgroundStyle } = useBackground(score);
 
   const resetGame = () => {
     setBirdPos({ x: 100, y: GAME_HEIGHT / 2 });
@@ -312,11 +312,7 @@ export const GameCanvas: React.FC = () => {
         maxWidth: '100vw',
         maxHeight: '80vh',
         aspectRatio: `${GAME_WIDTH} / ${GAME_HEIGHT}`,
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        transition: 'filter 0.5s ease-in-out',
-        filter: isTransitioning ? 'brightness(150%)' : 'brightness(100%)',
+        ...backgroundStyle,
       }}
       onClick={handleCanvasClick}
     >

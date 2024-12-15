@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const SCORE_THRESHOLD = 20;
+const TRANSITION_DURATION = 1000; // 1 second transition
 
 const backgrounds = [
   '/backgrounds/snowy.png',
@@ -13,7 +14,9 @@ const backgrounds = [
 
 export const useBackground = (score: number) => {
   const [currentBackground, setCurrentBackground] = useState(backgrounds[0]);
+  const [previousBackground, setPreviousBackground] = useState(backgrounds[0]);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionProgress, setTransitionProgress] = useState(0);
 
   useEffect(() => {
     const backgroundIndex = Math.min(
@@ -24,18 +27,46 @@ export const useBackground = (score: number) => {
     const targetBackground = backgrounds[backgroundIndex];
     
     if (targetBackground !== currentBackground) {
+      setPreviousBackground(currentBackground);
+      setCurrentBackground(targetBackground);
       setIsTransitioning(true);
-      const timer = setTimeout(() => {
-        setCurrentBackground(targetBackground);
-        setIsTransitioning(false);
-      }, 500); // Half second transition
+      setTransitionProgress(0);
+
+      const startTime = Date.now();
       
-      return () => clearTimeout(timer);
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / TRANSITION_DURATION, 1);
+        
+        setTransitionProgress(progress);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setIsTransitioning(false);
+        }
+      };
+      
+      requestAnimationFrame(animate);
     }
   }, [score, currentBackground]);
 
   return {
-    backgroundImage: currentBackground,
+    currentBackground,
+    previousBackground,
     isTransitioning,
+    transitionProgress,
+    style: {
+      backgroundImage: isTransitioning 
+        ? `url(${previousBackground}), url(${currentBackground})`
+        : `url(${currentBackground})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      transition: 'filter 0.5s ease-in-out',
+      filter: `blur(${isTransitioning ? (Math.sin(transitionProgress * Math.PI) * 5) : 0}px)`,
+      opacity: isTransitioning 
+        ? `${1 - transitionProgress}`
+        : 1,
+    }
   };
 }; 
