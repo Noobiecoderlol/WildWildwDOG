@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const SCORE_THRESHOLD = 20;
-const TRANSITION_DURATION = 1000; // 1 second transition
+const TRANSITION_DURATION = 400; // Reduced from 1000ms to 400ms
 
 const backgrounds = [
   '/backgrounds/snowy.png',
@@ -62,10 +62,10 @@ export const useBackground = (score: number) => {
         : `url(${currentBackground})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      transition: 'filter 0.5s ease-in-out',
-      filter: `blur(${isTransitioning ? (Math.sin(transitionProgress * Math.PI) * 5) : 0}px)`,
+      transition: 'all 0.2s ease-in-out',
+      filter: `blur(${isTransitioning ? (Math.sin(transitionProgress * Math.PI) * 3) : 0}px)`,
       opacity: isTransitioning 
-        ? `${1 - transitionProgress}`
+        ? Math.cos(transitionProgress * Math.PI / 2)
         : 1,
     }
   };
